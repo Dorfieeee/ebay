@@ -1,0 +1,19 @@
+<div class="card mb-3">
+  <div class="row no-gutters">
+    <div class="col-lg-3 card-image">
+      <a href="{% url 'listing' item.slug %}">
+        <img src="{{ item.image }}" class="card-img" alt="{{ item.name }}"
+          style="max-height: 100%; object-fit: contain;">
+      </a>
+    </div>
+    <div class="col-lg-9">
+      <div class="card-body" style="padding: .5rem 1rem;">
+        <h5 class="card-title"><a href="{% url 'listing' item.slug %}">{{ item.name }}</a></h5>
+        <p class="card-text">{{ item.description|truncatechars:100 }}</p>
+        <strong>£{% if item.curr_price %}{{ item.curr_price }}{% else %}{{ item.init_price }}{% endif %}</strong>
+        <small class="text-muted" style="display: block;">{% if item.is_active %}Ends in {{ item.ends_in }}{% endif %}</small>
+      </div>
+
+    </div>
+  </div>
+</div>

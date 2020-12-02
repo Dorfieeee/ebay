@@ -1,0 +1,42 @@
+{% extends "./layout.html" %}
+
+{% block title %}
+    {{ usr }} profile page
+{% endblock title %}
+
+{% block body %}
+    <div class="profile-header">
+        <div>
+            {% if usr.userprofile.image %}
+            <img src="{{ usr.userprofile.image }}" class="card-img" alt="{{ usr }}">
+            {% else %}
+            <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png" class="card-img" alt="{{ usr }}">
+            {% endif %}
+        </div>
+        <div class="text">
+            <h3>{{ usr }}</h3>
+            <small>Registration date: {{ usr.date_joined }}</small>
+        </div>
+    </div>
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <a class="nav-link active" id="nav-listings-tab" data-toggle="tab" href="#nav-listings" role="tab" aria-controls="nav-listings" aria-selected="true">Active Listings</a>
+            <a class="nav-link" id="nav-policy-tab" data-toggle="tab" href="#nav-policy" role="tab" aria-controls="nav-policy" aria-selected="false">Policy</a>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <!-- Active listings -->
+        <div class="tab-pane fade show active" id="nav-listings" role="tabpanel" aria-labelledby="nav-listings-tab">
+            {% include "./listing_card_wrapper.html" with listings=listings empty_mgs="{{ usr }} has no active listings at the moment." %}
+            {% include "./pagination.html" with selection=listings %}
+        </div>
+        <!-- usr's Policy -->
+        <div class="tab-pane fade" id="nav-policy" role="tabpanel" aria-labelledby="nav-policy-tab">
+            <p>{% lorem 3 p random %}</p>
+        </div>
+    </div>
+{% endblock body %}
+
+{% block script %}
+
+{% endblock script %}

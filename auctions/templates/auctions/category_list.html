@@ -1,0 +1,13 @@
+{% extends "./layout.html" %}
+
+{% block title %}
+{{ category }}
+{% endblock title %}
+
+
+{% block body %}
+
+{% include "./listing_card_wrapper.html" with listings=listings empty_msg="We are sorry, there are no listings in this category." %}
+{% include "./pagination.html" with selection=listings %}
+
+{% endblock body %}

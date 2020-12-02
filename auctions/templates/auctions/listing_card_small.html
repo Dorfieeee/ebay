@@ -1,0 +1,18 @@
+<a href="{{listing.get_absolute_url}}">
+    <div class="card border-0" style="width: 180px">
+        <div class="listing__top-image-wrapper">        
+            <img src="{{listing.image}}" class="listing__top-image" alt="{{listing.name}}">
+        </div>
+        <div class="card-body d-flex flex-column">
+            <h5 class="card-title" style="flex: 1 1;">{{listing.name|truncatechars:50}}</h5>
+            <strong>
+            {% if listing.curr_price %}
+                £{{ listing.curr_price }}
+            {% else %}
+                £{{ listing.init_price }}
+            {% endif %}
+            </strong>
+            <i>Ends in {{ listing.ends_in }}</i>
+        </div>        
+    </div>
+</a>

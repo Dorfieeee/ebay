@@ -1,0 +1,20 @@
+{% extends "./layout.html" %}
+
+{% block title %}Create item{% endblock %}
+{% block body %}
+  <h1>Create item</h1>
+  {% if form.errors %}
+  <p>
+    {{ form.errors }}
+  </p>
+  {% else %}
+  <p>Please, use the following form to create your item:</p>
+  {% endif %}
+  <div class="create-item-form">
+    <form action="{% url 'create_listing' %}" method="POST">
+      {{ form.as_p }}
+      {% csrf_token %}
+      <p><input type="submit" value="Submit"></p>
+    </form>
+  </div>
+{% endblock %}

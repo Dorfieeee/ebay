@@ -1,0 +1,386 @@
+{% extends "./layout.html" %}
+
+{% block title %}
+Listing of {{ listing.name }}
+{% endblock title %}
+
+{% block body %}
+{% if listing.is_active is not True %}
+<div class="alert alert-warning">
+    <strong>This listing has ended!</strong> You see this message because this listing is not active anymore.
+</div>
+{% endif %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+<h1 class="h1 mt-2">{{ listing.name }}</h1>
+<div class="row">
+    <!-- Image card -->
+    <div class="col-md-6">
+        <div class="card mb-3 listing__image-wrapper">
+            <img src="{{ listing.image }}" class="card-img" alt="{{ listing.name }}">
+        </div>
+    </div>
+
+    <div class="col-md-6">
+
+        <!-- Function card -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <p class="card-text">
+                    <div class="d-flex justify-content-between mb-3">
+                        {% if listing.is_active is not True %}
+                            {% if listing.get_winner == user %}
+                            <strong>You are winner of this auction!</strong>
+                            {% else %}
+                                {% if listing.get_winner %}
+                                <span><strong>Winner:</strong>&nbsp;{{ listing.get_winner|truncatechars:2 }}{{ listing.get_winner|make_list|last }}</span>
+                                {% else %}
+                                There is no winner for this auction.
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                        <span id="curr_price" class="font-weight-bold">
+                        £{{ price }}
+                        </span>
+                        {% if listing.is_active is True %}   
+                        <form id="watchlist_form">
+                            {% csrf_token %}
+                            <input type="hidden" id="listing_slug" name="listing_slug" value="{{ listing.slug }}">
+                            <button class="btn btn-danger" id="watchlist_form_submit" type="submit"
+                            {% if user == listing.owner %} disabled {% endif %}
+                            >
+                                {% if listing in user.watchlist.listing.all %}
+                                <i class="fas fa-eye-slash" title="Remove from watchlist"></i>
+                                {% else %}
+                                <i class="fas fa-eye" title="Add to watchlist"></i>
+                                {% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    
+                    {% if listing.is_active is True %}
+                    <form id="bid_form">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                              <span class="input-group-text">£</span>
+                            </div>
+                            <input type="number" name="bid_value" class="form-control"
+                                    min="{{ price }}" step="0.50" value="{{ price }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-danger" type="submit" 
+                                {% if user == listing.owner %} disabled {% endif %}
+                                >Bid
+                                </button>
+                            </div>
+                        </div>                  
+                    </form>
+                    {% endif %}
+                    
+                </p>
+
+                <div id="alert_root"></div>
+
+                <small style="float:right;">
+                    Deadline: {{ listing.end_date }}
+                </small>
+
+                <small class="text-muted" style="float:left;">
+                    {% if listing.is_active %}
+                    Ends in {{ listing.ends_in }}
+                    {% else %}
+                    Auction ended
+                    {% endif %}
+                </small>
+
+
+
+            </div>
+        </div>
+
+        <!-- Seller info card -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <p class="card-text">
+                    Seller: <a href="{% url 'profile' listing.owner %}">{{listing.owner}}</a>
+                </p>
+                {% if listing.is_active is not True and listing.owner == user%}
+                <p>
+                    {% if listing.get_winner %}
+                    Winner: <a href="{% url 'profile' listing.get_winner %}">{{listing.get_winner}}</a>
+                    {% else %}
+                    There is no winner for this auction.
+                    {% endif %}
+                </p>
+                {% endif %}
+                {% if user == listing.owner %}
+                    <form id="end_auction_form" action="{% url 'close_listing' %}" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="listing_slug" value="{{ listing.slug }}">
+                        <button class="btn btn-outline-danger" id="end_auction_form_submit" type="submit"
+                        {% if listing.is_active is not True %} disabled {% endif %}>
+                            Close This Listing Now
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+    <!-- Tabs -->
+    <div class="col mt-3">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+              <a class="nav-link active" id="nav-description-tab" data-toggle="tab" href="#nav-description" role="tab" aria-controls="nav-description" aria-selected="true">Description</a>
+              <a class="nav-link" id="nav-comments-tab" data-toggle="tab" href="#nav-comments" role="tab" aria-controls="nav-comments" aria-selected="true">Comments</a>
+              <a class="nav-link" id="nav-bids-tab" data-toggle="tab" href="#nav-bids" role="tab" aria-controls="nav-bids" aria-selected="false">Biding history</a>
+              <a class="nav-link" id="nav-policy-tab" data-toggle="tab" href="#nav-policy" role="tab" aria-controls="nav-policy" aria-selected="false">Policy</a>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <!-- Description -->
+            <div class="tab-pane fade show active" id="nav-description" role="tabpanel" aria-labelledby="nav-description-tab">
+                <p>{{ listing.description }}</p>
+            </div>
+            <!-- Comment Form -->
+            <div class="tab-pane fade" id="nav-comments" role="tabpanel" aria-labelledby="nav-comments-tab">
+                {% if comment_entry_form %}
+                <form class="mt-2 mb-3" action="{% url 'listing' listing.slug %}" method="POST">
+                    {% csrf_token %}
+                    <input class="btn btn-primary" type="submit" value="Send" style="float: right;margin: 0.5rem 0;">
+                    {{ comment_entry_form }}
+                </form>
+                {% endif %}
+                <!-- Comments -->
+                {% for comment in listing.comment_set.all %}
+                <div class="card mb-3" style="max-width: 600px;">
+                    <div class="row no-gutters">
+                        <div class="col-3 d-flex flex-column justify-content-start pt-3 pb-3 text-center">
+                            <div>
+                                {% if comment.author.userprofile.image %}
+                                <img src="{{ comment.author.userprofile.image }}" class="card-img" alt="{{ comment.author }}" style="max-width: 75px; border-radius: 20px;">
+                                {% else %}
+                                <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_640.png" class="card-img" alt="{{ comment.author }}" style="max-width: 75px; border-radius: 20px;">
+                                {% endif %}
+                            </div>
+                            <small><a href="{% url 'profile' comment.author %}">{{ comment.author }}</a></small>
+                        </div>
+                        <div class="card-body col-9 p-3 d-flex flex-column">     
+                            <h5 class="card-title">{{ comment.body|truncatewords:2 }}</h5>                       
+                            <p class="card-text flex-grow-1">{{ comment.body }}</p>
+                            <small class="text-muted">{{ comment.created_date }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p>No comments for this listing.</p>
+                <p>Yours can be the first one!</p>
+                {% endfor %}
+            </div>
+            <!-- Bidding history -->
+            <div class="tab-pane fade" id="nav-bids" role="tabpanel" aria-labelledby="nav-bids-tab">
+                <ul class="timeline">
+                    {% for bid in listing.bid_set.all  %}
+                    <li>
+                        <div class={% cycle 'direction-l' 'direction-r' %}>
+                            <div class="flag-wrapper">
+                                <span class="flag">£{{ bid.value }}</span>
+                                <span class="time-wrapper"><span class="time">{{ bid.created_date }}</span></span>
+                            </div>
+                            <div class="desc">{{ bid.bidder|truncatechars:2 }}{{ bid.bidder|make_list|last }}</div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    <li>
+		                <div class={% if listing.bid_set.all.count|divisibleby:2 %} "direction-l" {% else %} "direction-r" {% endif %}>
+                            <div class="flag-wrapper">
+                                <span class="flag">£{{ listing.init_price }}</span>
+                            </div>
+                            <div class="desc">Initial price</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <!-- Policy -->
+            <div class="tab-pane fade" id="nav-policy" role="tabpanel" aria-labelledby="nav-policy-tab">
+                <p>{% lorem 3 p random %}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const watchlistForm = document.getElementById('watchlist_form');
+    const bidForm = document.getElementById('bid_form');
+    
+    const getFormEntries = (formNode) => {
+        const elements = formNode.elements;
+        let str = '?';
+        for (let i = 0 ; i < elements.length ; i++) {
+            if (elements.item(i).tagName != 'INPUT') {
+                continue;
+            }
+            if (i > 0) {
+                str += '&';
+            }
+            let item = elements.item(i);
+            str += item.name + '=' + item.value;
+        }
+        return str
+    }
+
+    const showAlert = (type, title, content) => {
+        const root = document.querySelector('#alert_root');
+        root.innerHTML = `<div class="alert alert-${type} alert-dismissible show fade" role="alert">
+            <strong>${title}</strong>&nbsp${content}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>`;
+        setTimeout(() => {
+            $('#alert_root .alert').alert('close');
+        }, 10000)
+    }
+</script>
+
+{% if user != listing.owner and listing.is_active %}
+<script>    
+    const listingSlug = document.querySelector('[name=listing_slug]').value
+    const bidFormButton = document.querySelector('#bid_form button[type=submit]');
+    const bidFormInput = document.querySelector('#bid_form input[name=bid_value]');
+
+    if (!bidFormInput.value || bidFormInput.value <= bidFormInput.min) {
+        bidFormButton.disabled = true;
+    }
+
+    bidFormInput.addEventListener('change', (e) => {
+        if (!e.target.value || e.target.value <= e.target.min) {
+            bidFormButton.disabled = true;
+        } else {
+            bidFormButton.disabled = false;
+        }
+    })
+
+    const updateWatchlistCount = (value, action) => {
+        const watchlistCount = document.getElementById('watchlist_count');
+        const watchlistEye = document.querySelector('#watchlist_form_submit i');
+        if (value) {
+            watchlistCount.attributes['data-count'].value = value;
+        } else {
+            watchlistCount.attributes['data-count'].value = '';
+        } 
+
+        if (action === 'added') {
+            watchlistEye.className = 'fas fa-eye-slash';
+            watchlistEye.attributes['title'].value = 'Remove from watchlist'
+        } else {
+            watchlistEye.className = 'fas fa-eye';
+            watchlistEye.attributes['title'].value = 'Add to watchlist'
+        }
+    }
+
+    const updatePriceData = (value) => {
+        // Update displayed price, min input value
+        value = Number(value).toFixed(2)
+        document.getElementById('curr_price').innerText = '£' +  value
+        bidFormInput.min = value
+        bidFormInput.value = value
+        // Prevent from clicking the button again until input value change
+        bidFormButton.disabled = true;
+    }
+
+    bidForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        url = 'api/bid' + '?listing_slug=' + listingSlug;
+        let controller = new AbortController()
+        request = new Request(url, 
+                            {
+        "signal": controller.signal,
+        "method": "POST",
+        "headers": {"X-CSRFToken": csrftoken},
+        "mode": "same-origin",
+        "body": JSON.stringify({'listing_slug': listingSlug,
+                                'bid_value': bidFormInput.value})
+        });
+        try {
+            response = await fetch(request);
+            if (!response.ok) {
+                throw new Error('bidForm: ' + response.status)
+            }
+            if (response.redirected) {
+                controller.abort()
+            }
+            data = await response.json();
+            if (data['success'] === 'true') {
+                updatePriceData(data['curr_price']);
+                showAlert('success', 'Hooray!', data['msg']);
+            } else {
+                showAlert('danger', 'Ooops!', data['error']);
+            }
+        } catch (error) {
+            if (error.name = 'AbortError') {
+                return window.location.href = response.url;
+            }
+            console.log('bidForm: ' + error);
+        }    
+    })
+
+    watchlistForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        formString = getFormEntries(watchlistForm)
+        url = 'api/watchlist' + formString;
+        let controller = new AbortController()
+        request = new Request(url, 
+                        {
+                            "signal": controller.signal,
+                            "method": "POST",
+                            "headers": {"X-CSRFToken": csrftoken},
+                            "mode": "same-origin",
+                            "body": JSON.stringify({'listing_slug': listingSlug}),
+                        });
+        try {
+            response = await fetch(request);
+            if (!response.ok) {
+                throw new Error('watchlistForm: ' + response.status)
+            }
+            if (response.redirected) {
+                controller.abort()
+            }
+            data = await response.json();
+            updateWatchlistCount(data['watchlist_count'], data['action'])
+        } catch (error) {
+            if (error.name = 'AbortError') {
+                return window.location.href = response.url;
+            }
+            console.log('watchlistForm: ' + error);
+        }
+    })
+</script>
+{% else %}
+<script>
+    bidForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+    });
+
+    document.querySelector('input[name=bid_value]').disabled = true;
+
+    watchlistForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+    });
+
+</script>
+{% endif %}
+
+{% endblock body %}

@@ -1,0 +1,38 @@
+{% extends "auctions/layout.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block body %}
+  <h1>My dashboard</h1>
+  <nav>
+    <div class="nav nav-tabs">
+      <a class="nav-link {% if section == 'active' %}active{% endif %}" href="{% url 'active-listings' %}">My active listings</a>
+      <a class="nav-link {% if section == 'non-active' %}active{% endif %}" href="{% url 'non-active-listings' %}">My non-active listings</a>
+      <a class="nav-link {% if section == 'watchlist' %}active{% endif %}" href="{% url 'my-watchlist' %}">My watchlist</a>
+      <a class="nav-link {% if section == 'my-profile' %}active{% endif %}" href="{% url 'my-profile' %}">My profile</a>
+    </div>
+  </nav>
+
+  {% if section == 'active' %}
+    {% include "./listings_layout.html" with listings=listings empty_msg="You don't have any active listings at the moment." %}
+
+  {% elif section == 'non-active' %}
+    {% include "./listings_layout.html" with listings=listings empty_msg="You don't have any non-active listings at the moment." %}
+
+  {% elif section == 'watchlist' %}
+    {% include "./listings_layout.html" with listings=watchlist empty_msg="You don't have anything in your watchlist at the moment." %}
+
+  {% elif section == 'my-profile' %}
+  
+    <form class="" action="{% url 'my-profile' %}" method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+      {{ profile_form }}
+      <input type="submit" value="Save">
+      </div>
+    </form> 
+    
+  
+  {% endif %}
+
+{% endblock body %}

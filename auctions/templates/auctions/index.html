@@ -1,0 +1,72 @@
+{% extends "./layout.html" %}
+
+{% block title %}
+{{ title }}
+{% endblock title %}
+
+{% block body %}
+<div class="row no-gutters">
+    <div class="categories static">
+        <ul>
+            {% for cat in categories %}
+            <li>
+                <a href="{% url 'category' cat.slug %}">{{cat.name}}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col mt-2">
+        <h3>Recently added</h3>
+        <div class="carousel">
+            <div class="slider">
+                {% for listing in newest %}
+                    {% include "./listing_card_small.html" with listing=listing %}
+                {% endfor %}
+            </div>
+            <button class="slider-btn left"><i class="fas fa-chevron-left"></i></button>
+            <button class="slider-btn right"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <h3>Ending soon</h3>
+        <div class="carousel">
+            <div class="slider">
+                {% for listing in ending %}
+                    {% include "./listing_card_small.html" with listing=listing %}
+                {% endfor %}
+            </div>
+            <button class="slider-btn left"><i class="fas fa-chevron-left"></i></button>
+            <button class="slider-btn right"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+</div>
+<script>
+const categoriesMenu = document.querySelector('.categories');
+const categoriesList = document.querySelector('.categories ul');
+
+
+
+let toggler = () => {
+	categoriesMenu.classList.toggle('show');
+}
+
+const categoriesMenuMediaQuery = '(max-width: 992px)';
+const mediaQueryList = window.matchMedia(categoriesMenuMediaQuery);
+
+const categoriesMenuToggler = document.getElementById('categories-toggler')
+
+mediaQueryList.addEventListener('change', (e) => {
+	if (e.matches) {
+		if (categoriesMenu.classList.contains('static')) {
+			categoriesMenu.classList.remove('static');
+			categoriesMenuToggler.addEventListener('click', toggler)
+		}
+	}
+	else {
+		if (!categoriesMenu.classList.contains('static')) {
+			categoriesMenu.classList.add('static');
+		}
+		categoriesMenu.classList.remove('show');
+		categoriesMenuToggler.removeEventListener('click', toggler);
+	}
+})
+</script>
+{% endblock body %}

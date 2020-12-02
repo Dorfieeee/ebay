@@ -1,0 +1,7 @@
+<div class="content-wrapper">
+    {% for listing in listings %}
+        {% include "auctions/listing_card_big.html" with item=listing %}
+    {% empty %}
+        <h3>{{ empty_msg }}</h3>
+    {% endfor %}
+</div>
