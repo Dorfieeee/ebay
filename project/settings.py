@@ -26,7 +26,7 @@ SECRET_KEY = 'w2fywkiwv#i6j!rlwa+j$9u$^6am3zi3q**ys^9)egop^2p^r*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['deebay.herokuapp.com']
+ALLOWED_HOSTS = ['cs50w-ebay.onrender.com']
 
 
 # Application definition
